@@ -1,110 +1,95 @@
-const sqlite3 = require('sqlite3').verbose();
-const path = require('path');
-const fs = require('fs');
+const mysql = require('mysql2/promise');
 
-const dbPath = path.resolve(__dirname, '../database.sqlite');
-
-// Ensure database file exists
-const db = new sqlite3.Database(dbPath, (err) => {
-  if (err) {
-    console.error('Error opening database:', err.message);
-  } else {
-    console.log('Connected to the SQLite database at:', dbPath);
-    db.run('PRAGMA foreign_keys = ON'); // Enable foreign key constraints
-  }
+const pool = mysql.createPool({
+  host: process.env.DB_HOST || 'localhost',
+  port: process.env.DB_PORT ? parseInt(process.env.DB_PORT) : 3306,
+  user: process.env.DB_USER || 'root',
+  password: process.env.DB_PASSWORD || '',
+  database: process.env.DB_NAME || 'umkm_insight',
+  waitForConnections: true,
+  connectionLimit: 10,
+  queueLimit: 0
 });
 
-// Helper to run queries returning a Promise
-const run = (sql, params = []) => {
-  return new Promise((resolve, reject) => {
-    db.run(sql, params, function (err) {
-      if (err) {
-        reject(err);
-      } else {
-        resolve({ id: this.lastID, changes: this.changes });
-      }
-    });
-  });
+const normalizeSql = (sql) => {
+  if (!sql) return sql;
+  return sql.replace(/datetime\('now',\s*'localtime'\)/g, 'NOW()');
 };
 
-// Helper to query multiple rows
-const all = (sql, params = []) => {
-  return new Promise((resolve, reject) => {
-    db.all(sql, params, (err, rows) => {
-      if (err) {
-        reject(err);
-      } else {
-        resolve(rows);
-      }
-    });
-  });
+const run = async (sql, params = []) => {
+  sql = normalizeSql(sql);
+  const [result] = await pool.execute(sql, params);
+  return { id: result.insertId || null, changes: result.affectedRows || 0 };
 };
 
-// Helper to query a single row
-const get = (sql, params = []) => {
-  return new Promise((resolve, reject) => {
-    db.get(sql, params, (err, row) => {
-      if (err) {
-        reject(err);
-      } else {
-        resolve(row);
-      }
-    });
-  });
+const all = async (sql, params = []) => {
+  sql = normalizeSql(sql);
+  const [rows] = await pool.execute(sql, params);
+  return rows;
 };
 
-// Initialize tables
+const get = async (sql, params = []) => {
+  const rows = await all(sql, params);
+  return Array.isArray(rows) && rows.length > 0 ? rows[0] : null;
+};
+
 const initDb = async () => {
   try {
+    // Verify connection
+    const conn = await pool.getConnection();
+    conn.release();
+    console.log('Connected to the MySQL database');
+
     // 1. Users Table
-    await run(`
+    await pool.execute(`
       CREATE TABLE IF NOT EXISTS users (
-        id TEXT PRIMARY KEY,
-        username TEXT UNIQUE NOT NULL,
-        password TEXT NOT NULL,
-        role TEXT CHECK(role IN ('user', 'admin', 'lecturer')) DEFAULT 'user',
-        is_premium INTEGER DEFAULT 0,
-        premium_until TEXT,
-        created_at TEXT DEFAULT CURRENT_TIMESTAMP
-      )
+        id VARCHAR(64) PRIMARY KEY,
+        username VARCHAR(255) UNIQUE NOT NULL,
+        password VARCHAR(255) NOT NULL,
+        role ENUM('user','admin','lecturer') DEFAULT 'user',
+        is_premium TINYINT(1) DEFAULT 0,
+        premium_until DATETIME NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      ) ENGINE=InnoDB;
     `);
 
     // 2. Subscriptions Table
-    await run(`
+    await pool.execute(`
       CREATE TABLE IF NOT EXISTS subscriptions (
-        id TEXT PRIMARY KEY,
-        user_id TEXT NOT NULL,
-        amount INTEGER DEFAULT 10000,
-        status TEXT CHECK(status IN ('pending', 'settlement', 'expire', 'cancel')) DEFAULT 'pending',
+        id VARCHAR(128) PRIMARY KEY,
+        user_id VARCHAR(64) NOT NULL,
+        amount INT DEFAULT 10000,
+        status ENUM('pending','settlement','expire','cancel') DEFAULT 'pending',
         snap_token TEXT,
-        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-        updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-      )
+      ) ENGINE=InnoDB;
     `);
 
     // 3. API Logs Table
-    await run(`
+    await pool.execute(`
       CREATE TABLE IF NOT EXISTS api_logs (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        timestamp TEXT DEFAULT CURRENT_TIMESTAMP,
-        endpoint TEXT NOT NULL,
-        method TEXT NOT NULL,
-        user_id TEXT,
-        app_name TEXT DEFAULT 'umkm-insight',
-        status_code INTEGER,
+        id INT PRIMARY KEY AUTO_INCREMENT,
+        timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+        endpoint VARCHAR(512) NOT NULL,
+        method VARCHAR(16) NOT NULL,
+        user_id VARCHAR(64),
+        app_name VARCHAR(128) DEFAULT 'umkm-insight',
+        status_code INT,
         error_message TEXT
-      )
+      ) ENGINE=InnoDB;
     `);
 
-    console.log('Database tables successfully initialized.');
+    console.log('Database MySQL tables successfully initialized.');
   } catch (error) {
-    console.error('Error initializing database tables:', error);
+    console.error('Error initializing MySQL database tables:', error);
+    throw error;
   }
 };
 
 module.exports = {
-  db,
+  db: pool,
   run,
   all,
   get,

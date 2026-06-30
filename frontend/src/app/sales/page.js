@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import DashboardLayout from '@/components/DashboardLayout';
 import { api } from '@/utils/api';
+import { useAuth } from '@/context/AuthContext';
 import { 
   Search, 
   Filter, 
@@ -19,12 +20,15 @@ export default function SalesPage() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const { user } = useAuth();
 
   // Filter States
   const [category, setCategory] = useState('');
   const [umkmId, setUmkmId] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+
+  const isAdmin = user?.role === 'admin';
 
   const loadSalesData = async () => {
     try {
@@ -39,6 +43,54 @@ export default function SalesPage() {
       setData(res);
     } catch (err) {
       setError(err.message || 'Gagal memuat analisis penjualan.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getSourceAppSlug = (fromApp) => {
+    if (fromApp === 'Marketplace') return 'marketplace';
+    if (fromApp === 'POS') return 'pos';
+    return 'supplier';
+  };
+
+  const handleEditTransaction = async (tx) => {
+    const sourceApp = getSourceAppSlug(tx.from_app);
+    const amountValue = prompt('Masukkan nominal transaksi baru:', tx.amount);
+    if (amountValue === null) return;
+    const amount = Number(amountValue.toString().replace(/[^0-9]/g, ''));
+    if (!amount || Number.isNaN(amount)) {
+      return setError('Nominal transaksi tidak valid.');
+    }
+
+    const updates = { amount };
+    if (tx.from_app !== 'SupplierHub') {
+      const categoryValue = prompt('Ubah kategori transaksi:', tx.metadata?.category || '');
+      if (categoryValue !== null) {
+        updates.category = categoryValue;
+      }
+    }
+
+    try {
+      setLoading(true);
+      await api.updateTransaction(sourceApp, tx.tx_id, updates);
+      await loadSalesData();
+    } catch (err) {
+      setError(err.message || 'Gagal mengubah transaksi.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteTransaction = async (tx) => {
+    const sourceApp = getSourceAppSlug(tx.from_app);
+    if (!window.confirm('Anda yakin ingin menghapus transaksi ini?')) return;
+    try {
+      setLoading(true);
+      await api.deleteTransaction(sourceApp, tx.tx_id);
+      await loadSalesData();
+    } catch (err) {
+      setError(err.message || 'Gagal menghapus transaksi.');
     } finally {
       setLoading(false);
     }
@@ -297,12 +349,13 @@ export default function SalesPage() {
                       <th className="px-5 py-4">Aplikasi Sumber</th>
                       <th className="px-5 py-4 text-right">Potongan Layanan</th>
                       <th className="px-5 py-4 text-right">Nominal Kotor</th>
+                      {isAdmin && <th className="px-5 py-4 text-center">Aksi</th>}
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-800/50">
                     {transactions.length === 0 ? (
                       <tr>
-                        <td colSpan="7" className="px-5 py-8 text-center text-gray-500">Tidak ada data transaksi yang ditemukan.</td>
+                        <td colSpan={isAdmin ? 8 : 7} className="px-5 py-8 text-center text-gray-500">Tidak ada data transaksi yang ditemukan.</td>
                       </tr>
                     ) : (
                       transactions.map((tx) => (
@@ -326,6 +379,24 @@ export default function SalesPage() {
                           </td>
                           <td className="px-5 py-3.5 text-right font-semibold text-purple-400">-{formatCurrency(tx.fee)}</td>
                           <td className="px-5 py-3.5 text-right font-black text-white">{formatCurrency(tx.amount)}</td>
+                            {isAdmin && (
+                              <td className="px-5 py-3.5 text-right space-x-2">
+                                <button
+                                  type="button"
+                                  onClick={() => handleEditTransaction(tx)}
+                                  className="rounded-lg bg-yellow-500/10 px-3 py-1 text-[11px] font-semibold text-yellow-300 hover:bg-yellow-500/20 transition-colors"
+                                >
+                                  Edit
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleDeleteTransaction(tx)}
+                                  className="rounded-lg bg-red-500/10 px-3 py-1 text-[11px] font-semibold text-red-400 hover:bg-red-500/20 transition-colors"
+                                >
+                                  Hapus
+                                </button>
+                              </td>
+                            )}
                         </tr>
                       ))
                     )}

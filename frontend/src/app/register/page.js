@@ -7,7 +7,7 @@ import { useAuth } from '@/context/AuthContext';
 import { User, Lock, ArrowRight, UserPlus, Info } from 'lucide-react';
 
 export default function RegisterPage() {
-  const { register } = useAuth();
+  const { register, login } = useAuth();
   const router = useRouter();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -31,10 +31,7 @@ export default function RegisterPage() {
     setSubmitting(true);
     try {
       await register(username, password, role);
-      setSuccess('Pendaftaran berhasil! Mengalihkan ke halaman login...');
-      setTimeout(() => {
-        router.push('/login');
-      }, 2000);
+      await login(username, password);
     } catch (err) {
       setError(err.message || 'Pendaftaran gagal. Silakan coba lagi.');
       setSubmitting(false);

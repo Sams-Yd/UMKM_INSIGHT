@@ -59,4 +59,3 @@ Kontribusi
 Kontak
 ------
 Informasi pemilik repo ada di GitHub. Terima kasih.
-# Proyek Pertama Saya

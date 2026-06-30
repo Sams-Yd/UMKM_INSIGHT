@@ -82,6 +82,27 @@ export const api = {
     return data;
   },
 
+  updateTransaction: async (sourceApp, txId, updates) => {
+    const res = await fetch(`${API_BASE}/analytics/transaction/${sourceApp}/${txId}`, {
+      method: 'PUT',
+      headers: getHeaders(),
+      body: JSON.stringify(updates)
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to update transaction');
+    return data;
+  },
+
+  deleteTransaction: async (sourceApp, txId) => {
+    const res = await fetch(`${API_BASE}/analytics/transaction/${sourceApp}/${txId}`, {
+      method: 'DELETE',
+      headers: getHeaders()
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to delete transaction');
+    return data;
+  },
+
   // Subscriptions
   getSubscriptionPlans: async () => {
     const res = await fetch(`${API_BASE}/subscription/plans`, {

@@ -31,13 +31,17 @@ export default function DashboardLayout({ children }) {
     );
   }
 
-  const menuItems = [
+  const baseMenuItems = [
     { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
     { name: 'Analisis Penjualan', path: '/sales', icon: TrendingUp },
     { name: 'Analisis Cashflow', path: '/cashflow', icon: DollarSign },
     { name: 'Laporan Lanjutan', path: '/reports', icon: FileText },
     { name: 'Langganan Premium', path: '/subscription', icon: CreditCard },
   ];
+
+  const menuItems = user?.role === 'admin' 
+    ? [{ name: 'Admin Dashboard', path: '/admin', icon: Shield }, ...baseMenuItems]
+    : baseMenuItems;
 
   const getRoleBadge = (role) => {
     switch (role) {

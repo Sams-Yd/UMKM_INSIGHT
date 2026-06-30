@@ -541,10 +541,92 @@ const getReports = async (req, res) => {
   }
 };
 
+const getTransactionConfig = (sourceApp) => {
+  const config = {
+    marketplace: {
+      table: 'marketplace_transactions',
+      allowedFields: ['amount', 'fee', 'tax', 'status', 'category', 'umkm_name']
+    },
+    pos: {
+      table: 'pos_transactions',
+      allowedFields: ['amount', 'fee', 'tax', 'status', 'category', 'umkm_name']
+    },
+    supplier: {
+      table: 'supplier_transactions',
+      allowedFields: ['amount', 'tax', 'status', 'category', 'supplier_name', 'umkm_name']
+    }
+  };
+  return config[sourceApp] || null;
+};
+
+const updateTransaction = async (req, res) => {
+  try {
+    const { sourceApp, id } = req.params;
+    const config = getTransactionConfig(sourceApp);
+    if (!config) {
+      return res.status(400).json({ error: 'Invalid transaction source' });
+    }
+
+    const updates = {};
+    config.allowedFields.forEach((field) => {
+      if (req.body[field] !== undefined && req.body[field] !== null) {
+        updates[field] = req.body[field];
+      }
+    });
+
+    if (Object.keys(updates).length === 0) {
+      return res.status(400).json({ error: 'No valid fields provided for update' });
+    }
+
+    const setParts = Object.keys(updates).map((field) => `${field} = ?`).join(', ');
+    const values = Object.keys(updates).map((field) => updates[field]);
+    values.push(id);
+
+    const updateSql = `UPDATE ${config.table} SET ${setParts} WHERE id = ?`;
+    const result = await db.run(updateSql, values);
+
+    if (result.changes === 0) {
+      return res.status(404).json({ error: 'Transaction not found' });
+    }
+
+    const updatedTx = await db.get(`SELECT * FROM ${config.table} WHERE id = ?`, [id]);
+    return res.json({ success: true, transaction: updatedTx });
+  } catch (error) {
+    console.error('Transaction update error:', error);
+    res.locals.errorMessage = 'Failed to update transaction';
+    return res.status(500).json({ error: res.locals.errorMessage });
+  }
+};
+
+const deleteTransaction = async (req, res) => {
+  try {
+    const { sourceApp, id } = req.params;
+    const config = getTransactionConfig(sourceApp);
+    if (!config) {
+      return res.status(400).json({ error: 'Invalid transaction source' });
+    }
+
+    const deleteSql = `DELETE FROM ${config.table} WHERE id = ?`;
+    const result = await db.run(deleteSql, [id]);
+
+    if (result.changes === 0) {
+      return res.status(404).json({ error: 'Transaction not found' });
+    }
+
+    return res.json({ success: true, message: 'Transaction deleted successfully' });
+  } catch (error) {
+    console.error('Transaction delete error:', error);
+    res.locals.errorMessage = 'Failed to delete transaction';
+    return res.status(500).json({ error: res.locals.errorMessage });
+  }
+};
+
 module.exports = {
   syncExternalData,
   getDashboardData,
   getSalesAnalysis,
   getCashflowAnalysis,
-  getReports
+  getReports,
+  updateTransaction,
+  deleteTransaction
 };

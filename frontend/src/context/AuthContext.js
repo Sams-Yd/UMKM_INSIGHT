@@ -47,7 +47,8 @@ export const AuthProvider = ({ children }) => {
       const data = await api.login(username, password);
       localStorage.setItem('token', data.token);
       setUser(data.user);
-      router.push('/dashboard');
+      const destination = data.user?.role === 'admin' ? '/admin' : '/dashboard';
+      router.push(destination);
       return data;
     } catch (error) {
       setLoading(false);

@@ -139,9 +139,18 @@ export default function DashboardPage() {
         {/* Financial Aggregation Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-5">
           {/* Inflow Card */}
-          <div className="glass-card p-5 relative overflow-hidden">
+          <div className="glass-card p-5 relative overflow-visible">
             <div className="flex justify-between items-start">
-              <span className="text-xs font-semibold text-gray-400 uppercase">Inflow (Omzet)</span>
+              <div className="flex items-center gap-1.5">
+                <span className="text-xs font-semibold text-gray-400 uppercase">Inflow (Omzet)</span>
+                <div className="group relative z-20">
+                  <Info className="h-3.5 w-3.5 text-gray-500 cursor-help hover:text-white transition-colors" />
+                  <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-48 p-2 bg-[#1e293b] text-gray-200 text-xs rounded-lg shadow-xl opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity border border-slate-700 text-center">
+                    Total seluruh pendapatan kotor dari transaksi penjualan yang berhasil melalui sistem kasir dan marketplace.
+                    <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-[#1e293b]"></div>
+                  </div>
+                </div>
+              </div>
               <span className="p-1.5 bg-emerald-500/10 rounded-lg text-emerald-400"><ArrowUpRight className="h-4 w-4" /></span>
             </div>
             <p className="text-xl font-bold mt-4 text-white">{formatCurrency(summary.totalInflow)}</p>
@@ -149,9 +158,18 @@ export default function DashboardPage() {
           </div>
 
           {/* Outflow Card */}
-          <div className="glass-card p-5 relative overflow-hidden">
+          <div className="glass-card p-5 relative overflow-visible">
             <div className="flex justify-between items-start">
-              <span className="text-xs font-semibold text-gray-400 uppercase">Outflow (Belanja)</span>
+              <div className="flex items-center gap-1.5">
+                <span className="text-xs font-semibold text-gray-400 uppercase">Outflow (Belanja)</span>
+                <div className="group relative z-20">
+                  <Info className="h-3.5 w-3.5 text-gray-500 cursor-help hover:text-white transition-colors" />
+                  <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-48 p-2 bg-[#1e293b] text-gray-200 text-xs rounded-lg shadow-xl opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity border border-slate-700 text-center">
+                    Total biaya yang dikeluarkan UMKM untuk pembayaran ke supplier bahan baku atau inventaris.
+                    <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-[#1e293b]"></div>
+                  </div>
+                </div>
+              </div>
               <span className="p-1.5 bg-red-500/10 rounded-lg text-red-400"><ArrowDownRight className="h-4 w-4" /></span>
             </div>
             <p className="text-xl font-bold mt-4 text-white">{formatCurrency(summary.totalOutflow)}</p>
@@ -159,9 +177,18 @@ export default function DashboardPage() {
           </div>
 
           {/* Platform Fees */}
-          <div className="glass-card p-5 relative overflow-hidden">
+          <div className="glass-card p-5 relative overflow-visible">
             <div className="flex justify-between items-start">
-              <span className="text-xs font-semibold text-gray-400 uppercase">Biaya Layanan</span>
+              <div className="flex items-center gap-1.5">
+                <span className="text-xs font-semibold text-gray-400 uppercase">Biaya Layanan</span>
+                <div className="group relative z-20">
+                  <Info className="h-3.5 w-3.5 text-gray-500 cursor-help hover:text-white transition-colors" />
+                  <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-48 p-2 bg-[#1e293b] text-gray-200 text-xs rounded-lg shadow-xl opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity border border-slate-700 text-center">
+                    Total potongan biaya (fee) dari platform Marketplace maupun POS untuk setiap transaksi sukses.
+                    <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-[#1e293b]"></div>
+                  </div>
+                </div>
+              </div>
               <span className="p-1.5 bg-purple-500/10 rounded-lg text-purple-400"><Receipt className="h-4 w-4" /></span>
             </div>
             <p className="text-xl font-bold mt-4 text-white">{formatCurrency(summary.totalFees)}</p>
@@ -169,9 +196,18 @@ export default function DashboardPage() {
           </div>
 
           {/* Taxes Card */}
-          <div className="glass-card p-5 relative overflow-hidden">
+          <div className="glass-card p-5 relative overflow-visible">
             <div className="flex justify-between items-start">
-              <span className="text-xs font-semibold text-gray-400 uppercase">Estimasi Pajak</span>
+              <div className="flex items-center gap-1.5">
+                <span className="text-xs font-semibold text-gray-400 uppercase">Estimasi Pajak</span>
+                <div className="group relative z-20">
+                  <Info className="h-3.5 w-3.5 text-gray-500 cursor-help hover:text-white transition-colors" />
+                  <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-48 p-2 bg-[#1e293b] text-gray-200 text-xs rounded-lg shadow-xl opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity border border-slate-700 text-center">
+                    Total perkiraan pajak yang harus dibayarkan, dihitung secara otomatis (10%) dari setiap transaksi.
+                    <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-[#1e293b]"></div>
+                  </div>
+                </div>
+              </div>
               <span className="p-1.5 bg-sky-500/10 rounded-lg text-sky-400"><Percent className="h-4 w-4" /></span>
             </div>
             <p className="text-xl font-bold mt-4 text-white">{formatCurrency(summary.totalTaxes)}</p>
@@ -179,9 +215,18 @@ export default function DashboardPage() {
           </div>
 
           {/* Net Profit Card */}
-          <div className="glass-card p-5 relative overflow-hidden border-indigo-500/30 bg-indigo-950/10">
+          <div className="glass-card p-5 relative overflow-visible border-indigo-500/30 bg-indigo-950/10">
             <div className="flex justify-between items-start">
-              <span className="text-xs font-bold text-indigo-300 uppercase">Net Profit</span>
+              <div className="flex items-center gap-1.5">
+                <span className="text-xs font-bold text-indigo-300 uppercase">Net Profit</span>
+                <div className="group relative z-20">
+                  <Info className="h-3.5 w-3.5 text-indigo-400 cursor-help hover:text-white transition-colors" />
+                  <div className="absolute right-0 md:left-1/2 md:-translate-x-1/2 bottom-full mb-2 w-48 p-2 bg-[#1e293b] text-gray-200 text-xs rounded-lg shadow-xl opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity border border-slate-700 text-center">
+                    Keuntungan bersih (Net Profit) = Omzet - Belanja - Biaya Layanan - Estimasi Pajak.
+                    <div className="absolute top-full right-4 md:left-1/2 md:-translate-x-1/2 border-4 border-transparent border-t-[#1e293b]"></div>
+                  </div>
+                </div>
+              </div>
               <span className="p-1.5 bg-indigo-500/20 rounded-lg text-indigo-400"><DollarSign className="h-4 w-4" /></span>
             </div>
             <p className="text-xl font-black mt-4 text-white">{formatCurrency(summary.netProfit)}</p>
